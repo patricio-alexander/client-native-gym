@@ -9,13 +9,11 @@ import {
   Text,
   IconButton,
   useTheme,
-  ActivityIndicator,
   HelperText,
 } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useEffect, useState } from "react";
-// import { savePhotoCustomerRequest } from "../api/clients_api.js";
 import { api, pathPhotos } from "../api/axios.js";
 import { uploadAsync, FileSystemUploadType } from "expo-file-system";
 
@@ -65,13 +63,21 @@ const AddFormCustomer = ({ route }) => {
       return;
     }
 
-    addCustomer({
+    const commonValues = {
       ...values,
       startDate: formattedDateFinal,
       endingDate: formattedDateFinal,
       duration: durationInDays,
-      photo: file,
-    });
+    };
+
+    if (file) {
+      addCustomer({
+        ...commonValues,
+        photo: file,
+      });
+    } else {
+      addCustomer(commonValues);
+    }
   };
 
   const toggleDatePicker = () => {
@@ -138,7 +144,7 @@ const AddFormCustomer = ({ route }) => {
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      // console.log(customerId); mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.75,
@@ -169,7 +175,7 @@ const AddFormCustomer = ({ route }) => {
   }, []);
 
   const img = () => {
-    if (customerId && !file) {
+    if (customerId && form?.photo) {
       return { uri: `${pathPhotos}/${form.photo}` };
     }
 

@@ -88,23 +88,23 @@ export const CustomerContextProvider = ({ children }) => {
   const addCustomer = async (values) => {
     const fullFormData = new FormData();
 
-    Object.entries(values).forEach(([key, value]) => {
-      if (key === "photo") {
-        fullFormData.append(key, {
-          type: mime.getType(value),
-          name: value.split("/").pop(),
-          uri: value,
-        });
-        return;
-      }
-      fullFormData.append(key, value);
-    });
-
-    
+    if (values.photo) {
+      Object.entries(values).forEach(([key, value]) => {
+        if (key === "photo") {
+          fullFormData.append(key, {
+            type: mime.getType(value),
+            name: value.split("/").pop(),
+            uri: value,
+          });
+          return;
+        }
+        fullFormData.append(key, value);
+      });
+    }
 
     const {
       data: { existCustomer },
-    } = await addCustomerRequest(fullFormData);
+    } = await addCustomerRequest(values.photo ? fullFormData : values);
 
     if (!existCustomer) {
       Alert.alert(
