@@ -1,20 +1,32 @@
 import { Formik } from "formik";
-import { View, ScrollView, Platform } from "react-native";
+import { View, ScrollView, Platform, Alert } from "react-native";
 import { planDuration } from "../helpers/date.js";
 import { useCustomer } from "../context/CustomerProvider";
 import FormikInputValue from "./FormikInputValue";
-import { Button, Avatar, FAB, Text, IconButton } from "react-native-paper";
+import {
+  Button,
+  Avatar,
+  Text,
+  IconButton,
+  useTheme,
+  ActivityIndicator,
+  HelperText,
+} from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
-import { useTheme, HelperText } from "react-native-paper";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useEffect, useState } from "react";
-import { savePhotoCustomerRequest } from "../api/clients_api.js";
-import { pathPhotos } from "../api/axios.js";
+// import { savePhotoCustomerRequest } from "../api/clients_api.js";
+import { api, pathPhotos } from "../api/axios.js";
+import { uploadAsync, FileSystemUploadType } from "expo-file-system";
 
 const AddFormCustomer = ({ route }) => {
-  
   const theme = useTheme();
   const customerId = route.params?.customerId;
+  const [file, setFile] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [date, setDate] = useState(new Date());
+  const [open, setOpen] = useState(false);
+  const [success, setSucces] = useState(false);
   const [form, setForm] = useState({
     dni: "",
     names: "",
@@ -27,13 +39,9 @@ const AddFormCustomer = ({ route }) => {
     getCurrentPrice,
     addCustomer,
     getOneCustomer,
+    fetchCustomers,
     updateCustomerData,
   } = useCustomer();
-
-  const [file, setFile] = useState("");
-
-  const [date, setDate] = useState(new Date());
-  const [open, setOpen] = useState(false);
 
   const onSubmit = async (values) => {
     const { durationInDays, formattedDateInitial, formattedDateFinal } =
@@ -53,14 +61,13 @@ const AddFormCustomer = ({ route }) => {
         },
         customerId
       );
-      // console.log(customerId);
 
       return;
     }
 
     addCustomer({
       ...values,
-      startDate: formattedDateInitial,
+      startDate: formattedDateFinal,
       endingDate: formattedDateFinal,
       duration: durationInDays,
       photo: file,
@@ -82,18 +89,6 @@ const AddFormCustomer = ({ route }) => {
     } else {
       toggleDatePicker();
     }
-    // console.log(open);
-    // // console.log(type);
-
-    // if (type == "set") {
-    //   setDate(selectDate);
-
-    //   if (Platform.OS === "android") {
-    //     toggleDatePicker();
-    //   }
-    // } else {
-    //   toggleDatePicker();
-    // }
   };
 
   const validate = (values) => {
@@ -116,38 +111,46 @@ const AddFormCustomer = ({ route }) => {
     return errors;
   };
 
-  const savePhoto = async () => {
-    try {
-      const formData = new FormData();
-      formData.append("photo", {
-        uri: file,
-        type: "image/jpeg", // o el tipo de archivo correspondiente
-        name: "image.jpg", // nombre del archivo
+  const savePhoto = async (photo) => {
+    setUploading(true);
+    const res = await uploadAsync(
+      `${api}/customers/photo/${customerId}`,
+      photo,
+      {
+        httpMethod: "PUT",
+        uploadType: FileSystemUploadType.MULTIPART,
+        fieldName: "photo",
+      }
+    )
+      .then((r) => {
+        if (r.status === 200) {
+          setTimeout(() => {
+            setUploading(false);
+            setSucces(true);
+            fetchCustomers();
+          }, 2000);
+        }
+      })
+      .catch((e) => {
+        console.error(e);
       });
-
-      // console.log(formData)
-      const photo = await savePhotoCustomerRequest(customerId, formData);
-      // // console.log(photo)
-    } catch (error) {
-      console.log(error.response);
-    }
   };
 
   const pickImage = async () => {
-    // if (file) {
-    //   savePhoto();
-    //   return;
-    // }
-
-    // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
+      aspect: [1, 1],
+      quality: 0.75,
     });
 
     // console.log(result);
+
+    if (!result.canceled && customerId) {
+      setFile(result.assets[0].uri);
+      savePhoto(result.assets[0].uri);
+      return;
+    }
 
     if (!result.canceled) {
       setFile(result.assets[0].uri);
@@ -165,11 +168,27 @@ const AddFormCustomer = ({ route }) => {
     }
   }, []);
 
-  const imageUrl = file
-    ? file
-    : customerId && form?.photo
-    ? { uri: `${pathPhotos}/${form.photo}` }
-    : require("../../assets/noImage.png");
+  const img = () => {
+    if (customerId && !file) {
+      return { uri: `${pathPhotos}/${form.photo}` };
+    }
+
+    if (!file) {
+      return require("../../assets/noImage.png");
+    }
+
+    if (file) {
+      return { uri: file };
+    }
+  };
+
+  useEffect(() => {
+    if (success) {
+      setTimeout(() => {
+        setSucces(false);
+      }, 5000);
+    }
+  }, [success]);
 
   return (
     <ScrollView
@@ -195,7 +214,6 @@ const AddFormCustomer = ({ route }) => {
             <>
               {open && (
                 <DateTimePicker
-                
                   mode="date"
                   display="spinner"
                   value={date}
@@ -204,20 +222,26 @@ const AddFormCustomer = ({ route }) => {
               )}
 
               <View style={{ alignItems: "center", margin: 10 }}>
-                <Avatar.Image size={80} source={imageUrl} />
+                <Avatar.Image size={80} source={img()} />
 
                 <Button icon="camera" onPress={pickImage}>
                   {customerId ? "Editar" : "Añadir"} Foto
                 </Button>
 
-                {file && customerId && (
+                {success && (
+                  <Text style={{ color: theme.colors.success }}>
+                    Foto cambiada con éxito
+                  </Text>
+                )}
+
+                {/* {file && customerId && (
                   <FAB
                     icon="send"
                     size={20}
                     onPress={savePhoto}
                     style={{ position: "absolute", top: 0, left: 3 }}
                   />
-                )}
+                )} */}
               </View>
               <View
                 style={{
@@ -301,6 +325,16 @@ const AddFormCustomer = ({ route }) => {
                   justifyContent: "flex-end",
                 }}
               >
+                {uploading && (
+                  <Button
+                    // onPress={savePhoto}
+                    loading={uploading}
+                    // disabled={uploading}
+                  >
+                    {uploading ? "Enviando..." : "Enviar foto"}
+                  </Button>
+                )}
+
                 <Button
                   style={{ marginLeft: 10 }}
                   // textColor={theme.colors.white}

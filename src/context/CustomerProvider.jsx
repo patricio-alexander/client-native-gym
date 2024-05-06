@@ -1,4 +1,5 @@
 import { useContext, useEffect, useState } from "react";
+import mime from "mime";
 
 import {
   getCustomersRequest,
@@ -86,14 +87,24 @@ export const CustomerContextProvider = ({ children }) => {
 
   const addCustomer = async (values) => {
     const fullFormData = new FormData();
-    Object.entries(values).forEach(([key, value]) =>
-      fullFormData.append(key, value)
-    );
+
+    Object.entries(values).forEach(([key, value]) => {
+      if (key === "photo") {
+        fullFormData.append(key, {
+          type: mime.getType(value),
+          name: value.split("/").pop(),
+          uri: value,
+        });
+        return;
+      }
+      fullFormData.append(key, value);
+    });
+
+    
 
     const {
       data: { existCustomer },
     } = await addCustomerRequest(fullFormData);
-    console.log(existCustomer);
 
     if (!existCustomer) {
       Alert.alert(
@@ -121,7 +132,7 @@ export const CustomerContextProvider = ({ children }) => {
       ],
       { cancelable: false }
     );
-    // fetchCustomers();
+    fetchCustomers();
   };
 
   const updateCustomerData = async (data, customerId) => {
@@ -133,7 +144,7 @@ export const CustomerContextProvider = ({ children }) => {
         [
           {
             text: "Aceptar",
-            onPress: async() => await fetchCustomers(),
+            onPress: async () => await fetchCustomers(),
           },
         ],
         { cancelable: false }

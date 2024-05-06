@@ -4,12 +4,14 @@ import * as SecureStore from "expo-secure-store";
 //   "token"
 // )}`;
 
+export const api = "http://192.168.110.53:3000/api";
+
 const instance = axios.create({
-  baseURL: "http://192.168.110.53:3000/api",
-  withCredentials: true,
+  baseURL: api,
+  // withCredentials: true,
 });
 
-export const pathPhotos = "http://192.168.110.53:3000/photos"
+export const pathPhotos = "http://192.168.110.53:3000/photos";
 
 export const jwt = async () =>
   `Bearer ${await SecureStore.getItemAsync("token")}`;

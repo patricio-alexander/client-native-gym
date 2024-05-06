@@ -42,7 +42,7 @@ const Settings = () => {
         [
           {
             text: "Aceptar",
-            onPress: () => console.log("Aceptado"),
+            onPress: () => console.log("Aceptado precio"),
           },
         ],
         { cancelable: false }

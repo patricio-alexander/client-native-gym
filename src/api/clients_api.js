@@ -1,4 +1,5 @@
 import axios, { jwt } from "./axios.js";
+import { uploadAsync, FileSystemUploadType } from "expo-file-system";
 
 export const getOneCustomerRequest = async (customerId) =>
   await axios.get(`/customers/${customerId}`, {
@@ -14,18 +15,19 @@ export const getCustomers = async () =>
     },
   });
 
-export const savePhotoCustomerRequest = async (customerId, data) =>
-  await axios.put(`/customers/photo/${customerId}`, data, {
-    headers: {
-      Authorization: jwt(),
-      "Content-Type": "multipart/form-data"
-    },
-  });
+// export const savePhotoCustomerRequest = async (customerId, data) =>
+//   await axios.put(`/customers/photo/${customerId}`, data, {
+//     headers: {
+//       Authorization: jwt(),
+//       "Content-Type": "multipart/form-data"
+//     },
+//   });
 
 export const addCustomerRequest = async (data) =>
   await axios.post("/customers", data, {
     headers: {
-      Authorization: jwt(),
+      Authorization: await jwt(),
+      Accept: "application/json",
       "Content-Type": "multipart/form-data",
     },
   });
