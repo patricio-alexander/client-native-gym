@@ -42,41 +42,58 @@ const AddFormCustomer = ({ route }) => {
   } = useCustomer();
 
   const onSubmit = async (values) => {
-    const { durationInDays, formattedDateInitial, formattedDateFinal } =
-      planDuration({
-        initialDate: date,
-        price: values.amount,
-        currentPrice,
-      });
+    try {
+      setUploading(true);
+      const { durationInDays, formattedDateInitial, formattedDateFinal } =
+        planDuration({
+          initialDate: date,
+          price: values.amount,
+          currentPrice,
+        });
 
-    if (customerId) {
-      updateCustomerData(
-        {
-          ...values,
-          startDate: formattedDateInitial,
-          endingDate: formattedDateFinal,
-          duration: durationInDays,
-        },
-        customerId
-      );
+      if (customerId) {
+        const { success } = await updateCustomerData(
+          {
+            ...values,
+            startDate: formattedDateInitial,
+            endingDate: formattedDateFinal,
+            duration: durationInDays,
+          },
+          customerId
+        );
 
-      return;
-    }
+        if (success) {
+          setUploading(false);
+        }
 
-    const commonValues = {
-      ...values,
-      startDate: formattedDateFinal,
-      endingDate: formattedDateFinal,
-      duration: durationInDays,
-    };
+        return;
+      }
 
-    if (file) {
-      addCustomer({
-        ...commonValues,
-        photo: file,
-      });
-    } else {
-      addCustomer(commonValues);
+      const commonValues = {
+        ...values,
+        startDate: formattedDateInitial,
+        endingDate: formattedDateFinal,
+        duration: durationInDays,
+      };
+
+      if (file) {
+        const { success } = await addCustomer({
+          ...commonValues,
+          photo: file,
+        });
+
+        if (success) {
+          setUploading(false);
+        }
+      } else {
+        const { success } = await addCustomer(commonValues);
+
+        if (success) {
+          setUploading(false);
+        }
+      }
+    } catch (error) {
+      setUploading(false);
     }
   };
 
@@ -146,8 +163,6 @@ const AddFormCustomer = ({ route }) => {
       aspect: [1, 1],
       quality: 0.75,
     });
-
-    // console.log(result);
 
     if (!result.canceled && customerId) {
       setFile(result.assets[0].uri);
@@ -236,15 +251,6 @@ const AddFormCustomer = ({ route }) => {
                     Foto cambiada con éxito
                   </Text>
                 )}
-
-                {/* {file && customerId && (
-                  <FAB
-                    icon="send"
-                    size={20}
-                    onPress={savePhoto}
-                    style={{ position: "absolute", top: 0, left: 3 }}
-                  />
-                )} */}
               </View>
               <View
                 style={{
@@ -264,7 +270,7 @@ const AddFormCustomer = ({ route }) => {
                   size={20}
                   mode="outlined"
                   onPress={toggleDatePicker}
-                  style={{ marginLeft: "auto" }} // Mueve el IconButton a la derecha
+                  style={{ marginLeft: "auto" }}
                 />
               </View>
 
@@ -328,24 +334,13 @@ const AddFormCustomer = ({ route }) => {
                   justifyContent: "flex-end",
                 }}
               >
-                {uploading && (
-                  <Button
-                    // onPress={savePhoto}
-                    loading={uploading}
-                    // disabled={uploading}
-                  >
-                    {uploading ? "Enviando..." : "Enviar foto"}
-                  </Button>
-                )}
-
                 <Button
                   style={{ marginLeft: 10 }}
-                  // textColor={theme.colors.white}
-                  // buttonColor={theme.colors.red1}
                   onPress={handleSubmit}
-                  disabled={!isValid}
+                  disabled={!uploading ? !isValid : uploading}
+                  loading={uploading}
                 >
-                  Guardar
+                  {uploading ? "Enviando..." : "Guardar"}
                 </Button>
               </View>
             </>

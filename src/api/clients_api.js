@@ -26,14 +26,14 @@ export const addCustomerRequest = async (data) =>
 export const removeCustomerRequest = async (customerId) =>
   await axios.delete(`/customers/${customerId}`, {
     headers: {
-      Authorization: jwt(),
+      Authorization: await jwt(),
     },
   });
 
 export const updataCustomerDataRequest = async (customerData, customerId) =>
   await axios.put(`/customers/${customerId}`, customerData, {
     headers: {
-      Authorization: jwt(),
+      Authorization: await jwt(),
     },
   });
 

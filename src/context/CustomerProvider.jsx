@@ -2,9 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import mime from "mime";
 
 import {
-  getCustomersRequest,
   removeCustomerRequest,
-  // searchCustomerRequest,
   getOneCustomerRequest,
   updataCustomerDataRequest,
   addCustomerRequest,
@@ -14,8 +12,6 @@ import {
 
 import { createContext } from "react";
 import { Alert } from "react-native";
-
-// import toast from "react-hot-toast";
 
 const CustomerContext = createContext();
 
@@ -32,18 +28,8 @@ export const useCustomer = () => {
 
 export const CustomerContextProvider = ({ children }) => {
   const [customers, setCustomers] = useState([]);
-  const [customer, setCustomer] = useState({});
 
-  // const [form, setForm] = useState(initialStateForm);
   const [currentPrice, setCurrentPrice] = useState(0);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [search, setSearch] = useState("");
-  const [removeCustomerById, setRemoveCustomerDni] = useState(0);
-  const [notification, setNotification] = useState({ message: "", type: "" });
-  const [showDialog, setShowDialog] = useState(false);
-  const [showCard, setShowCard] = useState(false);
-  const [showModalPrice, setShowModalPrice] = useState(false);
 
   const iWantRemoveCustomer = (value) => {
     Alert.alert(
@@ -75,16 +61,6 @@ export const CustomerContextProvider = ({ children }) => {
     );
   };
 
-  const showCustomerCard = (customer) => {
-    setShowCard(true);
-    setCustomer(customer);
-  };
-
-  const showModalChangePrice = () => setShowModalPrice(true);
-  const hiddenModalChangePrice = () => setShowModalPrice(false);
-
-  const hiddenCustomerCard = () => setShowCard(false);
-
   const addCustomer = async (values) => {
     const fullFormData = new FormData();
 
@@ -108,7 +84,7 @@ export const CustomerContextProvider = ({ children }) => {
 
     if (!existCustomer) {
       Alert.alert(
-        "Cliente Agregado",
+        "Cliente agregado",
         "El cliente ha sigo registrado exitosamente",
         [
           {
@@ -118,11 +94,11 @@ export const CustomerContextProvider = ({ children }) => {
         ],
         { cancelable: false }
       );
-      return;
+      return { success: true };
     }
 
     Alert.alert(
-      "Cliente Encontrado",
+      "Cliente encontrado",
       "El cliente ya se encuentra registrado",
       [
         {
@@ -139,7 +115,7 @@ export const CustomerContextProvider = ({ children }) => {
     const { status } = await updataCustomerDataRequest(data, customerId);
     if (status === 200) {
       Alert.alert(
-        "Cliente Editado",
+        "Cliente editado",
         "El cliente editado con éxito",
         [
           {
@@ -149,6 +125,7 @@ export const CustomerContextProvider = ({ children }) => {
         ],
         { cancelable: false }
       );
+      return { success: true };
     }
   };
 
@@ -167,8 +144,6 @@ export const CustomerContextProvider = ({ children }) => {
     try {
       const { data } = await getOneCustomerRequest(customerId);
       return data[0];
-      // setCustomer(data[0]);
-      // setForm(data[0]);
     } catch (error) {
       console.log(error);
     }
@@ -176,15 +151,12 @@ export const CustomerContextProvider = ({ children }) => {
 
   const fetchCustomers = async () => {
     try {
-      
       const { data } = await getCustomers();
-  
+
       setCustomers(data.items);
     } catch (error) {
-      console.error(error)
-      
+      console.error(error);
     }
-    // !search ? loadCustomers() : searchClient();
   };
 
   useEffect(() => {
@@ -195,20 +167,13 @@ export const CustomerContextProvider = ({ children }) => {
     <CustomerContext.Provider
       value={{
         addCustomer,
-
-        hiddenCustomerCard,
         fetchCustomers,
         iWantRemoveCustomer,
-        showCustomerCard,
         getOneCustomer,
         updateCustomerData,
         customers,
-
         currentPrice,
-        customer,
         getCurrentPrice,
-        showModalChangePrice,
-        hiddenModalChangePrice,
       }}
     >
       {children}

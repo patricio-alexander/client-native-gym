@@ -75,7 +75,6 @@ const CustomerList = () => {
   }, [itemsPerPage]);
 
   useEffect(() => {
-    // Initialize visibility state for each row
     setVisibleMenus(Array(customers.length).fill(false));
   }, [customers.length]);
 
@@ -92,7 +91,6 @@ const CustomerList = () => {
           contentContainerStyle={containerStyle}
         >
           <Card>
-            
             <Card.Title
               title={customer.fullname}
               subtitle={customer.dni}
@@ -115,11 +113,11 @@ const CustomerList = () => {
               <Text variant="bodyMedium">Inicio: {customer.startDate}</Text>
               <Text variant="bodyMedium">Fin: {customer.endingDate}</Text>
               <Text style={{ color: theme.colors.success }}>
-                Pagó {customer.amount} $
+                Pagó ${customer.amount}
               </Text>
               {customer.amount < currentPrice && (
                 <Text style={{ color: theme.colors.warning }}>
-                  Debe {currentPrice - customer.amount} $
+                  Debe ${currentPrice - customer.amount}
                 </Text>
               )}
             </Card.Content>
@@ -128,7 +126,7 @@ const CustomerList = () => {
       </Portal>
 
       <Searchbar
-        placeholder="Search"
+        placeholder="Buscar"
         onChangeText={setSearchQuery}
         value={searchQuery}
         style={{ margin: 10 }}
@@ -136,14 +134,16 @@ const CustomerList = () => {
 
       <Button
         icon="account-plus"
-        // mode="contained"
-
-        style={{ margin: 10 }}
+        style={{ margin: 6 }}
         onPress={() => navigation.navigate("FormCustomer")}
       >
         Añadir cliente
       </Button>
       <List.Section style={{ margin: 10 }}>
+        <List.Subheader style={{ color: theme.colors.success }}>
+          <Icon source="cash-multiple" color={theme.colors.success} size={20} />{" "}
+          ${currentPrice}
+        </List.Subheader>
         <List.Subheader>Clientes</List.Subheader>
         <ScrollView style={{ maxHeight: 400 }}>
           {filteredData.slice(from, to).map((customer, index) => (
@@ -214,7 +214,7 @@ const CustomerList = () => {
           page={page}
           numberOfPages={Math.ceil(filteredData.length / itemsPerPage)}
           onPageChange={setPage}
-          label={`${from + 1}-${to} of ${filteredData.length}`}
+          label={`${from + 1}-${to} de ${filteredData.length}`}
           numberOfItemsPerPageList={[5, 10, 15, 20]} // Opciones de cantidad de elementos por página
           numberOfItemsPerPage={itemsPerPage}
           onItemsPerPageChange={(newItemsPerPage) => {
