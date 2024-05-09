@@ -175,9 +175,15 @@ export const CustomerContextProvider = ({ children }) => {
   };
 
   const fetchCustomers = async () => {
-    const { data } = await getCustomers();
-
-    setCustomers(data.items);
+    try {
+      
+      const { data } = await getCustomers();
+  
+      setCustomers(data.items);
+    } catch (error) {
+      console.error(error)
+      
+    }
     // !search ? loadCustomers() : searchClient();
   };
 

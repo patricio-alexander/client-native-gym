@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
-import { Image, View } from "react-native";
-import { TextInput, Button, Text, Avatar } from "react-native-paper";
+import { View } from "react-native";
+import {
+  Button,
+  Text,
+  Avatar,
+  ActivityIndicator,
+  MD2Colors,
+} from "react-native-paper";
 import { Formik } from "formik";
 import FormikInputValue from "../components/FormikInputValue";
 import { useAuth } from "../context/AuthContext";
@@ -45,11 +51,11 @@ const Login = () => {
               )}
 
               <View style={{ width: "100%", marginBottom: 10 }}>
-                <FormikInputValue label="Username" name="username" />
+                <FormikInputValue label="Usuario" name="username" />
               </View>
               <View style={{ width: "100%", marginBottom: 10 }}>
                 <FormikInputValue
-                  label="Password"
+                  label="Contraseña"
                   name="password"
                   secureTextEntry
                 />

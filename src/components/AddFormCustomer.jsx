@@ -14,7 +14,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useEffect, useState } from "react";
-import { api, pathPhotos } from "../api/axios.js";
+import { api, jwt, pathPhotos } from "../api/axios.js";
 import { uploadAsync, FileSystemUploadType } from "expo-file-system";
 
 const AddFormCustomer = ({ route }) => {
@@ -81,12 +81,10 @@ const AddFormCustomer = ({ route }) => {
   };
 
   const toggleDatePicker = () => {
-    console.log("pickertogle");
     setOpen(!open);
   };
 
   const onChange = ({ type }, selectDate) => {
-    console.log("on change");
     const currentDate = selectDate || date;
 
     if (Platform.OS === "android" && type === "set") {
@@ -118,33 +116,32 @@ const AddFormCustomer = ({ route }) => {
   };
 
   const savePhoto = async (photo) => {
-    setUploading(true);
-    const res = await uploadAsync(
-      `${api}/customers/photo/${customerId}`,
-      photo,
-      {
-        httpMethod: "PUT",
-        uploadType: FileSystemUploadType.MULTIPART,
-        fieldName: "photo",
-      }
-    )
-      .then((r) => {
-        if (r.status === 200) {
-          setTimeout(() => {
-            setUploading(false);
-            setSucces(true);
-            fetchCustomers();
-          }, 2000);
+    try {
+      setUploading(true);
+      const response = await uploadAsync(
+        `${api}/customers/photo/${customerId}`,
+        photo,
+        {
+          httpMethod: "PUT",
+          uploadType: FileSystemUploadType.MULTIPART,
+          fieldName: "photo",
+          headers: {
+            Authorization: await jwt(),
+          },
         }
-      })
-      .catch((e) => {
-        console.error(e);
-      });
+      );
+
+      setUploading(false);
+      setSucces(true);
+      fetchCustomers();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      // console.log(customerId); mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.75,
@@ -175,7 +172,7 @@ const AddFormCustomer = ({ route }) => {
   }, []);
 
   const img = () => {
-    if (customerId && form?.photo) {
+    if (customerId && form?.photo && !file) {
       return { uri: `${pathPhotos}/${form.photo}` };
     }
 

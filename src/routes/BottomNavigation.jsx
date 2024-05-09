@@ -1,9 +1,8 @@
-import Home from "../pages/Home";
-import Settings from "../pages/Settings";
+import Settings from "../Screens/Settings";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 
 import { createMaterialBottomTabNavigator } from "react-native-paper/react-navigation";
-import Customers from "../pages/Customers";
+import Customers from "../Screens/Customers";
 import { useTheme } from "react-native-paper";
 
 const Tab = createMaterialBottomTabNavigator();
@@ -11,18 +10,14 @@ const Tab = createMaterialBottomTabNavigator();
 const TabsNavigator = () => {
   const theme = useTheme();
   return (
-    <Tab.Navigator
-      barStyle={{ backgroundColor: theme.colors.background2 }}
-      
-    >
+    <Tab.Navigator barStyle={{ backgroundColor: theme.colors.background2 }}>
       <Tab.Screen
         name="Customers"
         component={Customers}
         options={{
           tabBarLabel: "Clientes",
-
           tabBarIcon: ({ color }) => (
-            <Icon name="account-group" color={color} size={26} />
+            <Icon name="account-group" color={color} size={23} />
           ),
         }}
       />
@@ -33,7 +28,7 @@ const TabsNavigator = () => {
           tabBarLabel: "Configuración",
 
           tabBarIcon: ({ color }) => (
-            <Icon name="cog" color={color} size={26} />
+            <Icon name="cog" color={color} size={23} />
           ),
         }}
       />

@@ -1,70 +1,79 @@
+import React, { useEffect, useState } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { NavigationContainer } from "@react-navigation/native";
+import { useTheme, Button } from "react-native-paper";
 import { useAuth } from "../context/AuthContext";
-import Home from "../pages/Home";
-import Login from "../pages/Login";
-
-import TabsNavigator from "./TabsNavigator";
-import { Button } from "react-native-paper";
+import Loading from "../components/Loading";
+import Login from "../Screens/Login";
+import BottomNavigation from "./BottomNavigation";
+import { useNavigation } from "@react-navigation/native";
 import AddFormCustomer from "../components/AddFormCustomer";
-import { useTheme } from "react-native-paper";
 
 const Stack = createNativeStackNavigator();
 
 const Routes = () => {
-  const theme = useTheme();
   const { isAuthenticated, isLoading, logout } = useAuth();
+  const [redirecting, setRedirecting] = useState(true);
+  const theme = useTheme();
+  const navigation = useNavigation();
+
+  if (isLoading) {
+    return <Loading></Loading>;
+  }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        {!isLoading && !isAuthenticated ? (
-          <Stack.Group>
-            <Stack.Screen
-              name="Login"
-              component={Login}
-              options={{
-                title: "Login",
-                headerTintColor: "#fff",
-                headerStyle: {
-                  backgroundColor: theme.colors.background,
-                },
-              }}
-            />
-          </Stack.Group>
-        ) : (
-          <Stack.Group>
-            <Stack.Screen
-              name="GYM CUSTOMERS TRACKER"
-              component={TabsNavigator}
-              options={{
-                headerTitle: "",
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: theme.colors.background },
+        headerTintColor: "#fff",
+      }}
+    >
+      {isAuthenticated ? (
+        <Stack.Group>
+          <Stack.Screen
+            name="Main"
+            component={BottomNavigation}
+            options={{
+              headerTitle: "",
+              headerBackVisible: false,
+              headerRight: () => (
+                <Button
+                  mode="text"
+                  icon="logout"
+                  onPress={() => {
+                    logout();
+                  }}
+                >
+                  Cerrar Sesión
+                </Button>
+              ),
+            }}
+          />
 
-                headerStyle: {
-                  backgroundColor: theme.colors.background,
-                },
-                headerRight: () => (
-                  <Button icon="exit-to-app" mode="text" onPress={logout}>
-                    Cerrar Sesión
-                  </Button>
-                ),
-              }}
-            />
-            <Stack.Screen
-              name="addCustomer"
-              component={AddFormCustomer}
-              options={{
-                headerTintColor: "#fff",
-                headerTitle: "Cliente",
-                headerStyle: {
-                  backgroundColor: theme.colors.background,
-                },
-              }}
-            />
-          </Stack.Group>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+          <Stack.Screen
+            name="FormCustomer"
+            component={AddFormCustomer}
+            options={{
+              headerTintColor: "#fff",
+              headerTitle: "Cliente",
+              headerStyle: {
+                backgroundColor: theme.colors.background,
+              },
+            }}
+          />
+        </Stack.Group>
+      ) : (
+        <Stack.Group>
+          <Stack.Screen
+            name="Login"
+            component={Login}
+            options={{
+              headerTitle: "Iniciar sesión",
+              headerBackVisible: false,
+            }}
+          />
+        </Stack.Group>
+      )}
+    </Stack.Navigator>
   );
 };
 

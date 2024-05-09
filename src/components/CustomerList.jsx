@@ -18,6 +18,7 @@ import {
   Avatar,
   Divider,
   List,
+  Icon,
 } from "react-native-paper";
 import { useCustomer } from "../context/CustomerProvider";
 import { pathPhotos } from "../api/axios";
@@ -91,6 +92,7 @@ const CustomerList = () => {
           contentContainerStyle={containerStyle}
         >
           <Card>
+            
             <Card.Title
               title={customer.fullname}
               subtitle={customer.dni}
@@ -137,7 +139,7 @@ const CustomerList = () => {
         // mode="contained"
 
         style={{ margin: 10 }}
-        onPress={() => navigation.navigate("addCustomer")}
+        onPress={() => navigation.navigate("FormCustomer")}
       >
         Añadir cliente
       </Button>
@@ -181,7 +183,7 @@ const CustomerList = () => {
                     leadingIcon="pencil"
                     title="Editar"
                     onPress={() => {
-                      navigation.navigate("addCustomer", {
+                      navigation.navigate("FormCustomer", {
                         customerId: customer.customerId,
                       });
                       closeMenu(index);

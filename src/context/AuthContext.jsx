@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { loginRequest, verifyTokenRequest } from "../api/clients_api";
-import { jwt, removeItem, saveItem } from "../api/axios";
+import { jwt, removeItem, saveItem, token } from "../api/axios";
 // import { loginRequest, verifyTokenRequest } from "../api/clients_api";
 
 // import Cookies from "js-cookie";
@@ -19,19 +19,17 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [errors, setErrors] = useState({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const signin = async (user) => {
     try {
       const res = await loginRequest(user);
       const { data } = res;
 
-      // Cookies.set("token", data.token);
       saveItem("token", data.token);
 
-      if (res.status === 200) {
-        setIsAuthenticated(true);
-      }
+      setIsAuthenticated(true);
+      setIsLoading(false);
     } catch (error) {
       // console.log(error);
       setErrors(error.response.data);
@@ -41,7 +39,9 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     // Cookies.remove("token");
     removeItem("token");
+
     setIsAuthenticated(false);
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -54,25 +54,24 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkLogin = async () => {
-      const token = await jwt();
-      // console.log(token);
-      // // const cookies = Cookies.get();
-      if (!token) {
-        setIsAuthenticated(false);
-        setIsLoading(false);
-
-        return;
-      }
-
       try {
-        const res = await verifyTokenRequest();
-        
-        if (!res.data) return setIsAuthenticated(false);
-        setIsAuthenticated(true);
-        setIsLoading(false);
+        const tk = await token();
+        if (!tk) {
+          setIsLoading(false);
+          setIsAuthenticated(false);
+          return;
+        }
+
+        setIsLoading(true);
+
+        const { data } = await verifyTokenRequest();
+        if (data) {
+          setIsLoading(false);
+          setIsAuthenticated(true);
+        }
       } catch (error) {
-        setIsAuthenticated(false);
         setIsLoading(false);
+        setIsAuthenticated(false);
       }
     };
     checkLogin();
