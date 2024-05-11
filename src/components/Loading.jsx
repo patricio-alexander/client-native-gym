@@ -13,7 +13,11 @@ function Loading() {
         padding: 20,
       }}
     >
-      <ActivityIndicator animating={true} color={MD2Colors.red800} />
+      <ActivityIndicator
+        animating={true}
+        size="large"
+        color={MD2Colors.red800}
+      />
     </View>
   );
 }

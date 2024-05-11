@@ -1,9 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { loginRequest, verifyTokenRequest } from "../api/clients_api";
-import { jwt, removeItem, saveItem, token } from "../api/axios";
-// import { loginRequest, verifyTokenRequest } from "../api/clients_api";
-
-// import Cookies from "js-cookie";
+import { removeItem, saveItem, token } from "../api/axios";
 
 const AuthContext = createContext();
 
@@ -19,7 +16,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [errors, setErrors] = useState({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const signin = async (user) => {
     try {
@@ -31,13 +28,11 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       setIsLoading(false);
     } catch (error) {
-      // console.log(error);
       setErrors(error.response.data);
     }
   };
 
   const logout = () => {
-    // Cookies.remove("token");
     removeItem("token");
 
     setIsAuthenticated(false);
@@ -57,8 +52,10 @@ export const AuthProvider = ({ children }) => {
       try {
         const tk = await token();
         if (!tk) {
-          setIsLoading(false);
-          setIsAuthenticated(false);
+          setTimeout(() => {
+            setIsAuthenticated(false);
+            setIsLoading(false);
+          }, 1000);
           return;
         }
 

@@ -1,12 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { View } from "react-native";
-import {
-  Button,
-  Text,
-  Avatar,
-  ActivityIndicator,
-  MD2Colors,
-} from "react-native-paper";
+import { Button, Text, Avatar } from "react-native-paper";
 import { Formik } from "formik";
 import FormikInputValue from "../components/FormikInputValue";
 import { useAuth } from "../context/AuthContext";
@@ -14,13 +8,19 @@ import { useTheme } from "react-native-paper";
 
 const initialValues = { username: "", password: "" };
 
-const Login = () => {
+const Login = ({ navigation }) => {
   const theme = useTheme();
-  const { signin, errors } = useAuth();
+  const { signin, errors, isAuthenticated } = useAuth();
 
   const onSubmit = (values) => {
     signin(values);
   };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigation.navigate("Main");
+    }
+  }, [isAuthenticated]);
 
   return (
     <View
@@ -61,7 +61,11 @@ const Login = () => {
                 />
               </View>
 
-              <Button style={{ marginTop: 10 }} onPress={handleSubmit}>
+              <Button
+                style={{ marginTop: 10 }}
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+              >
                 Iniciar sesión
               </Button>
             </>

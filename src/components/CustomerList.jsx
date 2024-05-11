@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import {
@@ -7,9 +7,7 @@ import {
   Menu,
   DataTable,
   Searchbar,
-  MD3Colors,
   useTheme,
-  Badge,
   Card,
   Text,
   Modal,
@@ -22,7 +20,6 @@ import {
 } from "react-native-paper";
 import { useCustomer } from "../context/CustomerProvider";
 import { pathPhotos } from "../api/axios";
-// import Table from "./Datatable";
 
 const CustomerList = () => {
   const theme = useTheme();
