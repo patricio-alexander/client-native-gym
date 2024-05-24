@@ -70,7 +70,7 @@ const Settings = () => {
           <Formik initialValues={form} onSubmit={onSubmit} validate={validate}>
             {({ handleSubmit, isValid, errors, touched }) => (
               <>
-                <Text variant="titleMedium">
+                <Text variant="titleMedium" style={{ marginBottom: 10 }}>
                   Precio actual: {currentPrice}$
                 </Text>
                 <FormikInputValue
@@ -82,7 +82,11 @@ const Settings = () => {
                 {errors.price && touched.price ? (
                   <HelperText type="error">{errors.price}</HelperText>
                 ) : null}
-                <Button onPress={handleSubmit} disabled={!isValid}>
+                <Button
+                  onPress={handleSubmit}
+                  disabled={!isValid}
+                  style={{ marginTop: 10 }}
+                >
                   Guardar
                 </Button>
               </>

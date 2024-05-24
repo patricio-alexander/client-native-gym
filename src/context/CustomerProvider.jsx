@@ -31,34 +31,16 @@ export const CustomerContextProvider = ({ children }) => {
 
   const [currentPrice, setCurrentPrice] = useState(0);
 
-  const iWantRemoveCustomer = (value) => {
-    Alert.alert(
-      "Eliminar",
-      "¿Está seguro de eliminar al cliente?",
-      [
-        {
-          text: "Cancelar",
-          // onPress: () => console.log("Aceptado"),
-        },
-        {
-          text: "Eliminar",
-          onPress: async () => {
-            try {
-              removeCustomerRequest(value.customerId);
+  const iWantRemoveCustomer = async (value) => {
+    try {
+      const res = await removeCustomerRequest(value.customerId);
 
-              setCustomers(
-                customers.filter(
-                  (customer) => customer.customerId !== value.customerId
-                )
-              );
-            } catch (error) {
-              console.log(error);
-            }
-          },
-        },
-      ],
-      { cancelable: false }
-    );
+      setCustomers(
+        customers.filter((customer) => customer.customerId !== value.customerId)
+      );
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const addCustomer = async (values) => {

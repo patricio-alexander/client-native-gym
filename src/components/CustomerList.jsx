@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ScrollView, View } from "react-native";
+import { ScrollView, View, FlatList } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import {
@@ -9,6 +9,7 @@ import {
   Searchbar,
   useTheme,
   Card,
+  Dialog,
   Text,
   Modal,
   Portal,
@@ -35,6 +36,7 @@ const CustomerList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [visible, setVisible] = useState(false);
   const [customer, setCustomer] = useState({});
+  const [activeDialog, setShowDialog] = useState(false);
 
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const { iWantRemoveCustomer, customers, fetchCustomers, currentPrice } =
@@ -42,6 +44,9 @@ const CustomerList = () => {
 
   const showModal = () => setVisible(true);
   const hideModal = () => setVisible(false);
+
+  const hideDialog = () => setShowDialog(false);
+  const showDialog = () => setShowDialog(true);
 
   const openMenu = (index) => {
     const newVisibleMenus = [...visibleMenus];
@@ -54,6 +59,71 @@ const CustomerList = () => {
     newVisibleMenus[index] = false;
     setVisibleMenus(newVisibleMenus);
   };
+
+  const CardItem = ({ item: customer, index }) => (
+    <Card.Title
+      title={customer.fullname}
+      subtitle={
+        customer.amount >= currentPrice ? (
+          <Text style={{ color: theme.colors.success }}>Pagado</Text>
+        ) : (
+          <Text style={{ color: theme.colors.warning }}>Debe</Text>
+        )
+      }
+      left={(props) => (
+        <Avatar.Image
+          {...props}
+          source={
+            customer.photo
+              ? { uri: `${pathPhotos}/${customer.photo}` }
+              : require("../../assets/noImage.png")
+          }
+        />
+      )}
+      right={() => (
+        <Menu
+          visible={visibleMenus[index]}
+          onDismiss={() => closeMenu(index)}
+          anchor={
+            <IconButton
+              icon="dots-horizontal"
+              size={20}
+              onPress={() => openMenu(index)}
+            />
+          }
+        >
+          <Menu.Item
+            leadingIcon="pencil"
+            title="Editar"
+            onPress={() => {
+              navigation.navigate("FormCustomer", {
+                customerId: customer.customerId,
+              });
+              closeMenu(index);
+            }}
+          />
+          <Menu.Item
+            leadingIcon="delete"
+            title="Eliminar"
+            onPress={() => {
+              showDialog(), closeMenu(index);
+              setCustomer(customer);
+            }}
+          />
+          <Divider />
+          <Menu.Item
+            leadingIcon="eye"
+            title="Ver"
+            onPress={() => {
+              showModal();
+              closeMenu(index);
+              setCustomer(customer);
+            }}
+          />
+        </Menu>
+      )}
+    />
+  );
 
   const filteredData = customers.filter((item) =>
     Object.values(item).some((value) =>
@@ -80,7 +150,28 @@ const CustomerList = () => {
   }, []);
 
   return (
-    <View>
+    <View style={{ position: "relative", height: "100%" }}>
+      <Portal>
+        <Dialog visible={activeDialog} onDismiss={hideDialog}>
+          <Dialog.Title>Eliminar cliente</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">¿Desea eliminar al cliente?</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={hideDialog}>Cancelar</Button>
+            <Button
+              mode="contained"
+              onPress={() => {
+                iWantRemoveCustomer(customer);
+                hideDialog();
+              }}
+            >
+              Confirmar
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
       <Portal>
         <Modal
           visible={visible}
@@ -142,87 +233,30 @@ const CustomerList = () => {
           ${currentPrice}
         </List.Subheader>
         <List.Subheader>Clientes</List.Subheader>
-        <ScrollView style={{ maxHeight: 400 }}>
-          {filteredData.slice(from, to).map((customer, index) => (
-            <Card.Title
-              key={index}
-              title={customer.fullname}
-              subtitle={
-                customer.amount >= currentPrice ? (
-                  <Text style={{ color: theme.colors.success }}>Pagado</Text>
-                ) : (
-                  <Text style={{ color: theme.colors.warning }}>Debe</Text>
-                )
-              }
-              left={(props) => (
-                <Avatar.Image
-                  {...props}
-                  source={
-                    customer.photo
-                      ? { uri: `${pathPhotos}/${customer.photo}` }
-                      : require("../../assets/noImage.png")
-                  }
-                />
-              )}
-              right={(props) => (
-                <Menu
-                  visible={visibleMenus[index]}
-                  onDismiss={() => closeMenu(index)}
-                  anchor={
-                    <IconButton
-                      icon="dots-horizontal"
-                      size={20}
-                      onPress={() => openMenu(index)}
-                    />
-                  }
-                >
-                  <Menu.Item
-                    leadingIcon="pencil"
-                    title="Editar"
-                    onPress={() => {
-                      navigation.navigate("FormCustomer", {
-                        customerId: customer.customerId,
-                      });
-                      closeMenu(index);
-                    }}
-                  />
-                  <Menu.Item
-                    leadingIcon="delete"
-                    title="Eliminar"
-                    onPress={() => iWantRemoveCustomer(customer)}
-                  />
-                  <Divider />
-                  <Menu.Item
-                    leadingIcon="eye"
-                    title="Ver"
-                    onPress={() => {
-                      showModal();
-                      closeMenu(index);
-                      setCustomer(customer);
-                    }}
-                  />
-                </Menu>
-              )}
-            />
-          ))}
-        </ScrollView>
-
-        <DataTable.Pagination
-          page={page}
-          numberOfPages={Math.ceil(filteredData.length / itemsPerPage)}
-          onPageChange={setPage}
-          label={`${from + 1}-${to} de ${filteredData.length}`}
-          numberOfItemsPerPageList={[5, 10, 15, 20]} // Opciones de cantidad de elementos por página
-          numberOfItemsPerPage={itemsPerPage}
-          onItemsPerPageChange={(newItemsPerPage) => {
-            setItemsPerPage(newItemsPerPage);
-
-            setPage(0); // Reiniciar la página a 0 al cambiar la cantidad de elementos por página
-          }}
-          showFastPaginationControls
-          selectPageDropdownLabel={"Filas por página"}
-        />
+        <View style={{ maxHeight: 360 }}>
+          <FlatList
+            data={filteredData.slice(from, to)}
+            renderItem={CardItem}
+            keyExtractor={(item) => item.dni}
+          />
+        </View>
       </List.Section>
+      <DataTable.Pagination
+        style={{ position: "absolute", bottom: 0 }}
+        page={page}
+        numberOfPages={Math.ceil(filteredData.length / itemsPerPage)}
+        onPageChange={setPage}
+        label={`${from + 1}-${to} de ${filteredData.length}`}
+        numberOfItemsPerPageList={[5, 10, 15, 20]} // Opciones de cantidad de elementos por página
+        numberOfItemsPerPage={itemsPerPage}
+        onItemsPerPageChange={(newItemsPerPage) => {
+          setItemsPerPage(newItemsPerPage);
+
+          setPage(0); // Reiniciar la página a 0 al cambiar la cantidad de elementos por página
+        }}
+        showFastPaginationControls
+        selectPageDropdownLabel={"Filas por página"}
+      />
     </View>
   );
 };
