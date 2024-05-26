@@ -10,6 +10,8 @@ import {
   IconButton,
   useTheme,
   HelperText,
+  Portal,
+  Dialog,
 } from "react-native-paper";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -87,7 +89,6 @@ const AddFormCustomer = ({ route }) => {
         }
       } else {
         const { success } = await addCustomer(commonValues);
-
         if (success) {
           setUploading(false);
         }
@@ -216,9 +217,6 @@ const AddFormCustomer = ({ route }) => {
     >
       <View
         style={{
-          // flex: 1,
-          // justifyContent: "center",
-          // alignItems: "center",
           padding: 20,
         }}
       >
@@ -320,6 +318,7 @@ const AddFormCustomer = ({ route }) => {
                   label="Monto"
                   keyboardType="numeric"
                   name="amount"
+                  maxLength={2}
                 />
                 {errors.amount && touched.amount ? (
                   <HelperText type="error">{errors.amount}</HelperText>

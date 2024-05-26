@@ -152,7 +152,11 @@ const CustomerList = () => {
   return (
     <View style={{ position: "relative", height: "100%" }}>
       <Portal>
-        <Dialog visible={activeDialog} onDismiss={hideDialog}>
+        <Dialog
+          visible={activeDialog}
+          onDismiss={hideDialog}
+          style={{ backgroundColor: theme.colors.background }}
+        >
           <Dialog.Title>Eliminar cliente</Dialog.Title>
           <Dialog.Content>
             <Text variant="bodyMedium">¿Desea eliminar al cliente?</Text>
@@ -234,11 +238,19 @@ const CustomerList = () => {
         </List.Subheader>
         <List.Subheader>Clientes</List.Subheader>
         <View style={{ maxHeight: 360 }}>
-          <FlatList
-            data={filteredData.slice(from, to)}
-            renderItem={CardItem}
-            keyExtractor={(item) => item.dni}
-          />
+          {!filteredData.length ? (
+            <View style={{ display: "flex", alignItems: "center" }}>
+              <Text style={{ color: theme.colors.secondary }}>
+                No existen usuarios registrados
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredData.slice(from, to)}
+              renderItem={CardItem}
+              keyExtractor={(item) => item.dni}
+            />
+          )}
         </View>
       </List.Section>
       <DataTable.Pagination

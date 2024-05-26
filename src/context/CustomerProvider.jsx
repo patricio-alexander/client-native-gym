@@ -11,7 +11,8 @@ import {
 } from "../api/clients_api";
 
 import { createContext } from "react";
-import { Alert } from "react-native";
+
+import Toast from "react-native-toast-message";
 
 const CustomerContext = createContext();
 
@@ -65,48 +66,33 @@ export const CustomerContextProvider = ({ children }) => {
     } = await addCustomerRequest(values.photo ? fullFormData : values);
 
     if (!existCustomer) {
-      Alert.alert(
-        "Cliente agregado",
-        "El cliente ha sigo registrado exitosamente",
-        [
-          {
-            text: "Aceptar",
-            onPress: async () => await fetchCustomers(),
-          },
-        ],
-        { cancelable: false }
-      );
+      Toast.show({
+        type: "success",
+        text1: "Usuario",
+        text2: "Usuario registrado con éxito",
+      });
+      fetchCustomers();
+
       return { success: true };
     }
 
-    Alert.alert(
-      "Cliente encontrado",
-      "El cliente ya se encuentra registrado",
-      [
-        {
-          text: "Aceptar",
-          onPress: () => console.log("Aceptado"),
-        },
-      ],
-      { cancelable: false }
-    );
+    Toast.show({
+      type: "info",
+      text1: "Usuario",
+      text2: "Usuario ya registrado",
+    });
+
     fetchCustomers();
   };
 
   const updateCustomerData = async (data, customerId) => {
     const { status } = await updataCustomerDataRequest(data, customerId);
     if (status === 200) {
-      Alert.alert(
-        "Cliente editado",
-        "El cliente editado con éxito",
-        [
-          {
-            text: "Aceptar",
-            onPress: async () => await fetchCustomers(),
-          },
-        ],
-        { cancelable: false }
-      );
+      Toast.show({
+        type: "success",
+        text1: "Usuario",
+        text2: "Datos actualizado con éxito",
+      });
       return { success: true };
     }
   };

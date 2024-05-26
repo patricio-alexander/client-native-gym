@@ -6,6 +6,7 @@ import {
   Modal,
   Text,
   useTheme,
+  Dialog,
   HelperText,
 } from "react-native-paper";
 import { Alert } from "react-native";
@@ -15,10 +16,12 @@ import { useCustomer } from "../context/CustomerProvider";
 import FormikInputValue from "../components/FormikInputValue";
 import { Formik } from "formik";
 import { changePriceRequest } from "../api/clients_api";
+import Toast from "react-native-toast-message";
 
 const Settings = () => {
   const { currentPrice, getCurrentPrice } = useCustomer();
   const [visible, setVisible] = useState(false);
+
   const [form, setForm] = useState({
     price: "",
   });
@@ -31,27 +34,22 @@ const Settings = () => {
   };
   const theme = useTheme();
   const showModal = () => setVisible(true);
+  const hideModal = () => setVisible(false);
 
   const onSubmit = async (value) => {
     try {
       const update = await changePriceRequest(value);
       getCurrentPrice();
-      Alert.alert(
-        "Precio",
-        "Precio cambiado con éxito",
-        [
-          {
-            text: "Aceptar",
-            onPress: () => console.log("Aceptado precio"),
-          },
-        ],
-        { cancelable: false }
-      );
+      hideModal();
+      Toast.show({
+        type: "success",
+        text1: "Precio",
+        text2: "Precio actualizado con éxito",
+      });
     } catch (error) {
       console.log(error);
     }
   };
-  const hideModal = () => setVisible(false);
 
   const containerStyle = {
     backgroundColor: theme.colors.background,
