@@ -33,7 +33,7 @@ const Login = ({ navigation }) => {
       }}
     >
       <Formik initialValues={initialValues} onSubmit={onSubmit}>
-        {({ handleSubmit, isSubmitting }) => {
+        {({ handleSubmit }) => {
           return (
             <>
               <Avatar.Image
@@ -61,11 +61,7 @@ const Login = ({ navigation }) => {
                 />
               </View>
 
-              <Button
-                style={{ marginTop: 10 }}
-                onPress={handleSubmit}
-                disabled={isSubmitting}
-              >
+              <Button style={{ marginTop: 10 }} onPress={handleSubmit}>
                 Iniciar sesión
               </Button>
             </>
