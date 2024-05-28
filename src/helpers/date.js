@@ -23,8 +23,12 @@ export const planDuration = ({
 };
 
 export const checkExpiration = (expirationDate) => {
+  const [year, month, day] = expirationDate
+    .split("/")
+    .map((num) => parseInt(num, 10));
+
   const currentDate = new Date();
-  const expirationDateObj = new Date(expirationDate);
+  const expirationDateObj = new Date(year, month - 1, day);
 
   // Establecer la hora a las 00:00:00 para ignorar la hora del día actual
   currentDate.setHours(0, 0, 0, 0);
@@ -33,19 +37,16 @@ export const checkExpiration = (expirationDate) => {
   const timeDifference = expirationDateObj.getTime() - currentDate.getTime();
 
   const expired = timeDifference < 0;
-  const elapsedDays = Math.abs(
-    Math.floor(timeDifference / (1000 * 60 * 60 * 24))
-  );
+  let lastDay = false;
 
   let remainingTime = null;
   if (!expired) {
     const remainingDays = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
     if (!remainingDays) {
       remainingTime = "Hoy es el último día";
+      lastDay = true;
     } else {
-      remainingTime = ` 
-      Quedan ${remainingDays} día${remainingDays !== 1 ? "s" : ""}
-      `;
+      remainingTime = `Quedan ${remainingDays} día${remainingDays !== 1 ? "s" : ""}`;
     }
   }
 
@@ -59,5 +60,5 @@ export const checkExpiration = (expirationDate) => {
     }`;
   }
   // console.log({ expired, remainingTime, elapsedAfterExpiration })
-  return { expired, remainingTime, elapsedAfterExpiration };
+  return { expired, remainingTime, elapsedAfterExpiration, lastDay };
 };

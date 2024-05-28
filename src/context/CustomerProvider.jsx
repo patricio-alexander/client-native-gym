@@ -93,6 +93,7 @@ export const CustomerContextProvider = ({ children }) => {
         text1: "Usuario",
         text2: "Datos actualizado con éxito",
       });
+      fetchCustomers();
       return { success: true };
     }
   };

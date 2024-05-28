@@ -21,6 +21,7 @@ import {
 } from "react-native-paper";
 import { useCustomer } from "../context/CustomerProvider";
 import { pathPhotos } from "../api/axios";
+import { checkExpiration } from "../helpers/date";
 
 const CustomerList = () => {
   const theme = useTheme();
@@ -60,70 +61,93 @@ const CustomerList = () => {
     setVisibleMenus(newVisibleMenus);
   };
 
-  const CardItem = ({ item: customer, index }) => (
-    <Card.Title
-      title={customer.fullname}
-      subtitle={
-        customer.amount >= currentPrice ? (
-          <Text style={{ color: theme.colors.success }}>Pagado</Text>
-        ) : (
-          <Text style={{ color: theme.colors.warning }}>Debe</Text>
-        )
-      }
-      left={(props) => (
-        <Avatar.Image
-          {...props}
-          source={
-            customer.photo
-              ? { uri: `${pathPhotos}/${customer.photo}` }
-              : require("../../assets/noImage.png")
+  const CardItem = ({ item: customer, index }) => {
+    const { expired, remainingTime, elapsedAfterExpiration, lastDay } =
+      checkExpiration(customer.endingDate);
+
+    return (
+      <Card
+        mode="contained"
+        style={{
+          marginBottom: 7,
+          backgroundColor: theme.colors.background2,
+          borderRightColor: expired
+            ? theme.colors.error
+            : lastDay
+            ? theme.colors.warning
+            : theme.colors.success,
+          borderRightWidth: 3,
+        }}
+      >
+        <Card.Title
+          title={customer.fullname}
+          subtitle={
+            customer.amount >= currentPrice ? (
+              <Text style={{ color: theme.colors.success }}>Pagado</Text>
+            ) : (
+              <Text style={{ color: theme.colors.warning }}>Debe</Text>
+            )
           }
-        />
-      )}
-      right={() => (
-        <Menu
-          visible={visibleMenus[index]}
-          onDismiss={() => closeMenu(index)}
-          anchor={
-            <IconButton
-              icon="dots-horizontal"
-              size={20}
-              onPress={() => openMenu(index)}
+          left={(props) => (
+            <Avatar.Image
+              {...props}
+              source={
+                customer.photo
+                  ? { uri: `${pathPhotos}/${customer.photo}` }
+                  : require("../../assets/noImage.png")
+              }
             />
-          }
-        >
-          <Menu.Item
-            leadingIcon="pencil"
-            title="Editar"
-            onPress={() => {
-              navigation.navigate("FormCustomer", {
-                customerId: customer.customerId,
-              });
-              closeMenu(index);
-            }}
-          />
-          <Menu.Item
-            leadingIcon="delete"
-            title="Eliminar"
-            onPress={() => {
-              showDialog(), closeMenu(index);
-              setCustomer(customer);
-            }}
-          />
-          <Divider />
-          <Menu.Item
-            leadingIcon="eye"
-            title="Ver"
-            onPress={() => {
-              showModal();
-              closeMenu(index);
-              setCustomer(customer);
-            }}
-          />
-        </Menu>
-      )}
-    />
-  );
+          )}
+          right={() => (
+            <Menu
+              visible={visibleMenus[index]}
+              onDismiss={() => closeMenu(index)}
+              anchor={
+                <IconButton
+                  icon="dots-horizontal"
+                  size={20}
+                  onPress={() => openMenu(index)}
+                />
+              }
+            >
+              <Menu.Item
+                leadingIcon="pencil"
+                title="Editar"
+                onPress={() => {
+                  navigation.navigate("FormCustomer", {
+                    customerId: customer.customerId,
+                  });
+                  closeMenu(index);
+                }}
+              />
+              <Menu.Item
+                leadingIcon="delete"
+                title="Eliminar"
+                onPress={() => {
+                  showDialog(), closeMenu(index);
+                  setCustomer(customer);
+                }}
+              />
+              <Divider />
+              <Menu.Item
+                leadingIcon="eye"
+                title="Ver"
+                onPress={() => {
+                  showModal();
+                  closeMenu(index);
+                  setCustomer({
+                    ...customer,
+                    remainingTime,
+                    elapsedAfterExpiration,
+                  });
+                }}
+              />
+            </Menu>
+          )}
+        />
+      </Card>
+    );
+  };
 
   const filteredData = customers.filter((item) =>
     Object.values(item).some((value) =>
@@ -198,7 +222,7 @@ const CustomerList = () => {
               )}
               // right={(props) => ()}
             />
-            <Card.Content>
+            <Card.Content style={{ position: "relative" }}>
               <Text variant="bodyMedium">
                 Duración {customer.duration} días
               </Text>
@@ -212,6 +236,15 @@ const CustomerList = () => {
                   Debe ${currentPrice - customer.amount}
                 </Text>
               )}
+              <Text
+                style={{
+                  position: "absolute",
+                  bottom: 10,
+                  right: 15,
+                }}
+              >
+                {customer.remainingTime || customer.elapsedAfterExpiration}
+              </Text>
             </Card.Content>
           </Card>
         </Modal>
@@ -238,19 +271,13 @@ const CustomerList = () => {
         </List.Subheader>
         <List.Subheader>Clientes</List.Subheader>
         <View style={{ maxHeight: 360 }}>
-          {!filteredData.length ? (
-            <View style={{ display: "flex", alignItems: "center" }}>
-              <Text style={{ color: theme.colors.secondary }}>
-                No existen usuarios registrados
-              </Text>
-            </View>
-          ) : (
+          {
             <FlatList
               data={filteredData.slice(from, to)}
               renderItem={CardItem}
               keyExtractor={(item) => item.dni}
             />
-          )}
+          }
         </View>
       </List.Section>
       <DataTable.Pagination
