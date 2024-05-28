@@ -13,6 +13,7 @@ import {
   Text,
   Modal,
   Portal,
+  Badge,
   Button,
   Avatar,
   Divider,
@@ -254,7 +255,7 @@ const CustomerList = () => {
         placeholder="Buscar"
         onChangeText={setSearchQuery}
         value={searchQuery}
-        style={{ margin: 10 }}
+        style={{ marginHorizontal: 10 }}
       />
 
       <Button
@@ -264,13 +265,10 @@ const CustomerList = () => {
       >
         Añadir cliente
       </Button>
-      <List.Section style={{ margin: 10 }}>
-        <List.Subheader style={{ color: theme.colors.success }}>
-          <Icon source="cash-multiple" color={theme.colors.success} size={20} />{" "}
-          ${currentPrice}
-        </List.Subheader>
-        <List.Subheader>Clientes</List.Subheader>
-        <View style={{ maxHeight: 360 }}>
+      <List.Section style={{ marginHorizontal: 10 }}>
+        <List.Subheader>Tarifa mensual de ${currentPrice}</List.Subheader>
+
+        <View style={{ maxHeight: 400 }}>
           {
             <FlatList
               data={filteredData.slice(from, to)}

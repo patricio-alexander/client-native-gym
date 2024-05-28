@@ -69,7 +69,7 @@ const Settings = () => {
             {({ handleSubmit, isValid, errors, touched }) => (
               <>
                 <Text variant="titleMedium" style={{ marginBottom: 10 }}>
-                  Precio actual: {currentPrice}$
+                  Tarifa mensual de ${currentPrice}
                 </Text>
                 <FormikInputValue
                   label="Nuevo precio"
