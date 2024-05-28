@@ -86,7 +86,9 @@ const CustomerList = () => {
             customer.amount >= currentPrice ? (
               <Text style={{ color: theme.colors.success }}>Pagado</Text>
             ) : (
-              <Text style={{ color: theme.colors.warning }}>Debe</Text>
+              <Text style={{ color: theme.colors.warning }}>
+                Pago pendiente
+              </Text>
             )
           }
           left={(props) => (
@@ -225,16 +227,16 @@ const CustomerList = () => {
             />
             <Card.Content style={{ position: "relative" }}>
               <Text variant="bodyMedium">
-                Duración {customer.duration} días
+                Duración de {customer.duration} días
               </Text>
-              <Text variant="bodyMedium">Inicio: {customer.startDate}</Text>
-              <Text variant="bodyMedium">Fin: {customer.endingDate}</Text>
+              <Text variant="bodyMedium">{customer.startDate} (Comienzo)</Text>
+              <Text variant="bodyMedium">{customer.endingDate} (Finalización)</Text>
               <Text style={{ color: theme.colors.success }}>
                 Pagó ${customer.amount}
               </Text>
               {customer.amount < currentPrice && (
                 <Text style={{ color: theme.colors.warning }}>
-                  Debe ${currentPrice - customer.amount}
+                  Pago pendientede  ${currentPrice - customer.amount}
                 </Text>
               )}
               <Text

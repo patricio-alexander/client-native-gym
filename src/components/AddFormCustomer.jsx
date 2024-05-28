@@ -241,7 +241,7 @@ const AddFormCustomer = ({ route }) => {
                 <Avatar.Image size={80} source={img()} />
 
                 <Button icon="camera" onPress={pickImage}>
-                  {customerId ? "Editar" : "Añadir"} Foto
+                  {customerId ? "Editar" : "Añadir"} foto
                 </Button>
 
                 {success && (

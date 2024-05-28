@@ -43,10 +43,10 @@ export const checkExpiration = (expirationDate) => {
   if (!expired) {
     const remainingDays = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
     if (!remainingDays) {
-      remainingTime = "Hoy es el último día";
+      remainingTime = "Hoy finaliza la suscripción";
       lastDay = true;
     } else {
-      remainingTime = `Quedan ${remainingDays} día${remainingDays !== 1 ? "s" : ""}`;
+      remainingTime = `${remainingDays} día${remainingDays !== 1 ? "s" : ""} restantes`;
     }
   }
 
@@ -55,7 +55,7 @@ export const checkExpiration = (expirationDate) => {
     const elapsedDaysAfterExpiration = Math.abs(
       Math.ceil(timeDifference / (1000 * 60 * 60 * 24))
     );
-    elapsedAfterExpiration = `Expiró hace ${elapsedDaysAfterExpiration} día${
+    elapsedAfterExpiration = `Finalizó hace ${elapsedDaysAfterExpiration} día${
       elapsedDaysAfterExpiration !== 1 ? "s" : ""
     }`;
   }
