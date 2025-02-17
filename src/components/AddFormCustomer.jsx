@@ -3,6 +3,7 @@ import { View, ScrollView, Platform, Alert } from "react-native";
 import { planDuration } from "../helpers/date.js";
 import { useCustomer } from "../context/CustomerProvider";
 import FormikInputValue from "./FormikInputValue";
+
 import {
   Button,
   Avatar,
@@ -18,9 +19,11 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useEffect, useState } from "react";
 import { api, jwt, pathPhotos } from "../api/axios.js";
 import { uploadAsync, FileSystemUploadType } from "expo-file-system";
+import { useSQLiteContext } from "expo-sqlite";
 
 const AddFormCustomer = ({ route }) => {
   const theme = useTheme();
+  const db = useSQLiteContext();
   const customerId = route.params?.customerId;
   const [file, setFile] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -31,16 +34,18 @@ const AddFormCustomer = ({ route }) => {
     dni: "",
     names: "",
     lastnames: "",
-    phone: "",
     amount: "",
+    planCost: "",
+    duration: "",
+    description: "",
   });
   const {
-    currentPrice,
-    getCurrentPrice,
     addCustomer,
+    currentPrice,
+    updateCustomerData,
+    getCurrentPrice,
     getOneCustomer,
     fetchCustomers,
-    updateCustomerData,
   } = useCustomer();
 
   const onSubmit = async (values) => {
@@ -49,8 +54,9 @@ const AddFormCustomer = ({ route }) => {
       const { durationInDays, formattedDateInitial, formattedDateFinal } =
         planDuration({
           initialDate: date,
-          price: values.amount,
-          currentPrice,
+          price: parseInt(values.amount),
+          currentPrice: parseInt(values.planCost),
+          duration: parseInt(values.duration),
         });
 
       if (customerId) {
@@ -59,9 +65,12 @@ const AddFormCustomer = ({ route }) => {
             ...values,
             startDate: formattedDateInitial,
             endingDate: formattedDateFinal,
-            duration: durationInDays,
+            duration: Number(values.duration),
+            amount: Number(values.amount),
+            dni: Number(values.dni),
+            planCost: Number(values.planCost),
           },
-          customerId
+          customerId,
         );
 
         if (success) {
@@ -75,7 +84,10 @@ const AddFormCustomer = ({ route }) => {
         ...values,
         startDate: formattedDateInitial,
         endingDate: formattedDateFinal,
-        duration: durationInDays,
+        duration: Number(values.duration),
+        amount: Number(values.amount),
+        dni: Number(values.dni),
+        planCost: Number(values.planCost),
       };
 
       if (file) {
@@ -117,16 +129,13 @@ const AddFormCustomer = ({ route }) => {
     const errors = {};
     if (!values.dni) {
       errors.dni = "Cédula requerida";
-    } else if (values.dni.length !== 10) {
+    } else if (values.dni.length < 10) {
       errors.dni = "La cédula debe contener 10 dígitos";
     }
 
     if (values.names.length <= 3) errors.names = "Nombres requeridos";
 
     if (values.lastnames.length <= 3) errors.lastnames = "Apellidos requeridos";
-
-    if (values.phone.length < 10)
-      errors.phone = "El número debe tener 10 dígitos";
 
     if (!values.amount) errors.amount = "Coloque el monto";
 
@@ -146,7 +155,7 @@ const AddFormCustomer = ({ route }) => {
           headers: {
             Authorization: await jwt(),
           },
-        }
+        },
       );
 
       setUploading(false);
@@ -177,10 +186,15 @@ const AddFormCustomer = ({ route }) => {
   };
 
   useEffect(() => {
-    getCurrentPrice();
     if (customerId) {
       (async () => {
         const data = await getOneCustomer(customerId);
+
+        const [year, month, day] = data.startDate
+          .split("/")
+          .map((num) => Number(num));
+
+        setDate(new Date(year, month - 1, day));
 
         setForm(data);
       })();
@@ -237,32 +251,25 @@ const AddFormCustomer = ({ route }) => {
                 />
               )}
 
-              <View style={{ alignItems: "center", margin: 10 }}>
-                <Avatar.Image size={80} source={img()} />
-
-                <Button icon="camera" onPress={pickImage}>
-                  {customerId ? "Editar" : "Añadir"} foto
-                </Button>
-
-                {success && (
-                  <Text style={{ color: theme.colors.success }}>
-                    Foto cambiada con éxito
-                  </Text>
-                )}
-              </View>
+              {/* <View style={{ alignItems: "center", margin: 10 }}> */}
+              {/*   <Avatar.Image size={80} source={img()} /> */}
+              {/**/}
+              {/*   <Button icon="camera" onPress={pickImage}> */}
+              {/*     {customerId ? "Editar" : "Añadir"} foto */}
+              {/*   </Button> */}
+              {/**/}
+              {/*   {success && ( */}
+              {/*     <Text style={{ color: theme.colors.success }}> */}
+              {/*       Foto cambiada con éxito */}
+              {/*     </Text> */}
+              {/*   )} */}
+              {/* </View> */}
               <View
                 style={{
                   width: "100%",
                   marginBottom: 10,
-                  display: "flex",
-                  flexDirection: "row", // Alinear los elementos en fila
-                  alignItems: "center",
-                  alignContent: "center",
                 }}
               >
-                <Text variant="bodyLarge">
-                  Fecha de pago: {date.toLocaleDateString()}
-                </Text>
                 <IconButton
                   icon="calendar"
                   size={20}
@@ -270,6 +277,10 @@ const AddFormCustomer = ({ route }) => {
                   onPress={toggleDatePicker}
                   style={{ marginLeft: "auto" }}
                 />
+
+                <Text variant="bodyLarge">
+                  Fecha de pago: {date.toISOString().split("T")[0]}
+                </Text>
               </View>
 
               <View style={{ width: "100%", marginBottom: 10 }}>
@@ -293,7 +304,7 @@ const AddFormCustomer = ({ route }) => {
                 ) : null}
               </View>
 
-              <View style={{ width: "100%", marginBottom: 10 }}>
+              <View style={{ marginBottom: 10 }}>
                 <FormikInputValue label="Apellidos" name="lastnames" />
 
                 {errors.lastnames && touched.lastnames ? (
@@ -301,19 +312,7 @@ const AddFormCustomer = ({ route }) => {
                 ) : null}
               </View>
 
-              <View style={{ width: "100%", marginBottom: 10 }}>
-                <FormikInputValue
-                  label="Célular"
-                  keyboardType="numeric"
-                  name="phone"
-                  maxLength={10}
-                />
-                {errors.phone && touched.phone ? (
-                  <HelperText type="error">{errors.phone}</HelperText>
-                ) : null}
-              </View>
-
-              <View style={{ width: "100%", marginBottom: 10 }}>
+              <View style={{ marginBottom: 10 }}>
                 <FormikInputValue
                   label="Monto"
                   keyboardType="numeric"
@@ -324,6 +323,29 @@ const AddFormCustomer = ({ route }) => {
                   <HelperText type="error">{errors.amount}</HelperText>
                 ) : null}
               </View>
+
+              <View style={{ marginBottom: 10 }}>
+                <FormikInputValue
+                  label="Costo del plan"
+                  keyboardType="numeric"
+                  name="planCost"
+                  maxLength={2}
+                />
+              </View>
+
+              <View style={{ marginBottom: 10 }}>
+                <FormikInputValue
+                  label="Duración"
+                  keyboardType="numeric"
+                  name="duration"
+                  maxLength={2}
+                />
+              </View>
+
+              <View style={{ width: "100%", marginBottom: 10 }}>
+                <FormikInputValue label="Descripción" name="description" />
+              </View>
+
               <View
                 style={{
                   width: "100%",

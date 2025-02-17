@@ -2,17 +2,18 @@ export const planDuration = ({
   initialDate = new Date(),
   price,
   currentPrice,
+  duration,
 }) => {
   const formattedDateInitial = `${initialDate.getFullYear()}/${
     initialDate.getMonth() + 1
   }/${initialDate.getDate()}`;
 
-  const durationInDays = Math.ceil((price * 30) / currentPrice);
+  const durationInDays = Math.ceil((price * duration) / currentPrice);
 
   const dateFinal = new Date(
     initialDate.getFullYear(),
     initialDate.getMonth(),
-    initialDate.getDate() + durationInDays
+    initialDate.getDate() + durationInDays,
   );
 
   const formattedDateFinal = `${dateFinal.getFullYear()}/${
@@ -53,7 +54,7 @@ export const checkExpiration = (expirationDate) => {
   let elapsedAfterExpiration = null;
   if (expired) {
     const elapsedDaysAfterExpiration = Math.abs(
-      Math.ceil(timeDifference / (1000 * 60 * 60 * 24))
+      Math.ceil(timeDifference / (1000 * 60 * 60 * 24)),
     );
     elapsedAfterExpiration = `Finalizó hace ${elapsedDaysAfterExpiration} día${
       elapsedDaysAfterExpiration !== 1 ? "s" : ""

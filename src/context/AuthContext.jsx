@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { loginRequest, verifyTokenRequest } from "../api/clients_api";
-import { removeItem, saveItem, token } from "../api/axios";
+import { removeItem, saveItem, auth } from "../api/axios";
+
+import { useSQLiteContext } from "expo-sqlite";
 
 const AuthContext = createContext();
 
@@ -14,26 +16,32 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
+  const db = useSQLiteContext();
+
   const [errors, setErrors] = useState({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const signin = async (user) => {
     try {
-      const res = await loginRequest(user);
-      const { data } = res;
-
-      saveItem("token", data.token);
-
-      setIsAuthenticated(true);
-      setIsLoading(false);
+      const correct = await db.getFirstAsync(
+        "SELECT * FROM users WHERE username = ? AND password = ?",
+        [user.username, user.password],
+      );
+      if (correct) {
+        saveItem("auth", "true");
+        setIsAuthenticated(true);
+        setIsLoading(false);
+      }
+      //
+      //
     } catch (error) {
       setErrors(error.response.data);
     }
   };
 
   const logout = () => {
-    removeItem("token");
+    removeItem("auth");
 
     setIsAuthenticated(false);
     setIsLoading(false);
@@ -50,8 +58,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkLogin = async () => {
       try {
-        const tk = await token();
-        if (!tk) {
+        setIsLoading(true);
+        const session = await auth();
+        if (!session) {
           setTimeout(() => {
             setIsAuthenticated(false);
             setIsLoading(false);
@@ -59,13 +68,8 @@ export const AuthProvider = ({ children }) => {
           return;
         }
 
-        setIsLoading(true);
-
-        const { data } = await verifyTokenRequest();
-        if (data) {
-          setIsLoading(false);
-          setIsAuthenticated(true);
-        }
+        setIsLoading(false);
+        setIsAuthenticated(true);
       } catch (error) {
         setIsLoading(false);
         setIsAuthenticated(false);

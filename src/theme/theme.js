@@ -30,6 +30,8 @@ const darkTheme = {
     surfaceVariant: "#27282f",
 
     blue1: "#4258ff",
+    male: "#a2c1f9",
+    female: "#ff98d0",
     info: "#66d1ff",
     white: "#ffffff",
     success: "#80ed99",

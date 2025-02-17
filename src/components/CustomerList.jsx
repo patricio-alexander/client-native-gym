@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { ScrollView, View, FlatList } from "react-native";
+import { View, FlatList } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 import {
+  Chip,
   IconButton,
   Menu,
   DataTable,
@@ -13,12 +14,10 @@ import {
   Text,
   Modal,
   Portal,
-  Badge,
   Button,
   Avatar,
   Divider,
   List,
-  Icon,
 } from "react-native-paper";
 import { useCustomer } from "../context/CustomerProvider";
 import { pathPhotos } from "../api/axios";
@@ -41,8 +40,7 @@ const CustomerList = () => {
   const [activeDialog, setShowDialog] = useState(false);
 
   const [itemsPerPage, setItemsPerPage] = useState(5);
-  const { iWantRemoveCustomer, customers, fetchCustomers, currentPrice } =
-    useCustomer();
+  const { iWantRemoveCustomer, customers, fetchCustomers } = useCustomer();
 
   const showModal = () => setVisible(true);
   const hideModal = () => setVisible(false);
@@ -75,15 +73,15 @@ const CustomerList = () => {
           borderRightColor: expired
             ? theme.colors.error
             : lastDay
-            ? theme.colors.warning
-            : theme.colors.success,
+              ? theme.colors.warning
+              : theme.colors.success,
           borderRightWidth: 3,
         }}
       >
         <Card.Title
-          title={customer.fullname}
+          title={`${customer.names} ${customer.lastnames}`}
           subtitle={
-            customer.amount >= currentPrice ? (
+            customer.amount >= customer.planCost ? (
               <Text style={{ color: theme.colors.success }}>Pagado</Text>
             ) : (
               <Text style={{ color: theme.colors.warning }}>
@@ -157,8 +155,8 @@ const CustomerList = () => {
       String(value)
         .toLowerCase()
         .trim()
-        .includes(searchQuery.toLowerCase().trim())
-    )
+        .includes(searchQuery.toLowerCase().trim()),
+    ),
   );
 
   const from = page * itemsPerPage;
@@ -209,53 +207,57 @@ const CustomerList = () => {
           onDismiss={hideModal}
           contentContainerStyle={containerStyle}
         >
-          <Card>
-            <Card.Title
-              title={customer.fullname}
-              subtitle={customer.dni}
-              left={(props) => (
-                <Avatar.Image
-                  {...props}
-                  source={
-                    customer.photo
-                      ? { uri: `${pathPhotos}/${customer.photo}` }
-                      : require("../../assets/noImage.png")
-                  }
-                />
-              )}
-              // right={(props) => ()}
-            />
-            <Card.Content style={{ position: "relative" }}>
-              <Text variant="bodyMedium">
-                Duración de {customer.duration} días
+          <Card.Title
+            title={`${customer.names} ${customer.lastnames}`}
+            subtitle={customer.dni}
+            left={(props) => (
+              <Avatar.Image
+                {...props}
+                source={
+                  customer.photo
+                    ? { uri: `${pathPhotos}/${customer.photo}` }
+                    : require("../../assets/noImage.png")
+                }
+              />
+            )}
+            // right={(props) => ()}
+          />
+          <Text variant="titleMedium">Duración</Text>
+          <View style={{ marginLeft: 10 }}>
+            <Text variant="bodyMedium">
+              {customer.duration} días (
+              {customer.remainingTime || customer.elapsedAfterExpiration})
+            </Text>
+            <Text variant="bodyMedium">{customer.startDate} (Inicio)</Text>
+            <Text variant="bodyMedium">
+              {customer.endingDate} (Finalización)
+            </Text>
+          </View>
+
+          <Text variant="titleMedium">Descripción</Text>
+
+          <View style={{ marginLeft: 10 }}>
+            {customer.description && (
+              <Text variant="bodyMedium">{customer.description}</Text>
+            )}
+            <Text variant="bodyMedium" style={{ color: theme.colors.success }}>
+              Dinero cancelado de ${customer.amount}
+            </Text>
+            {customer.amount < customer.planCost && (
+              <Text style={{ color: theme.colors.warning }}>
+                Pago pendientede ${customer.planCost - customer.amount}
               </Text>
-              <Text variant="bodyMedium">{customer.startDate} (Comienzo)</Text>
-              <Text variant="bodyMedium">{customer.endingDate} (Finalización)</Text>
-              <Text style={{ color: theme.colors.success }}>
-                Pagó ${customer.amount}
-              </Text>
-              {customer.amount < currentPrice && (
-                <Text style={{ color: theme.colors.warning }}>
-                  Pago pendientede  ${currentPrice - customer.amount}
-                </Text>
-              )}
-              <Text
-                style={{
-                  position: "absolute",
-                  bottom: 10,
-                  right: 15,
-                }}
-              >
-                {customer.remainingTime || customer.elapsedAfterExpiration}
-              </Text>
-            </Card.Content>
-          </Card>
+            )}
+          </View>
         </Modal>
       </Portal>
 
       <Searchbar
         placeholder="Buscar"
-        onChangeText={setSearchQuery}
+        onChangeText={(t) => {
+          setSearchQuery(t);
+          setPage(0);
+        }}
         value={searchQuery}
         style={{ marginHorizontal: 10 }}
       />
@@ -267,21 +269,8 @@ const CustomerList = () => {
       >
         Añadir cliente
       </Button>
-      <List.Section style={{ marginHorizontal: 10 }}>
-        <List.Subheader>Tarifa mensual de ${currentPrice}</List.Subheader>
 
-        <View style={{ maxHeight: 400 }}>
-          {
-            <FlatList
-              data={filteredData.slice(from, to)}
-              renderItem={CardItem}
-              keyExtractor={(item) => item.dni}
-            />
-          }
-        </View>
-      </List.Section>
       <DataTable.Pagination
-        style={{ position: "absolute", bottom: 0 }}
         page={page}
         numberOfPages={Math.ceil(filteredData.length / itemsPerPage)}
         onPageChange={setPage}
@@ -295,6 +284,16 @@ const CustomerList = () => {
         }}
         showFastPaginationControls
         selectPageDropdownLabel={"Filas por página"}
+      />
+
+      <FlatList
+        style={{ marginHorizontal: 10 }}
+        data={filteredData.slice(from, to)}
+        renderItem={CardItem}
+        contentContainerStyle={{
+          paddingBottom: 100,
+        }}
+        keyExtractor={(item) => item.dni}
       />
     </View>
   );

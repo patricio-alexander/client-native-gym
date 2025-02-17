@@ -1,14 +1,6 @@
-import { useContext, useEffect, useState } from "react";
-import mime from "mime";
+import { useContext, useState } from "react";
 
-import {
-  removeCustomerRequest,
-  getOneCustomerRequest,
-  updataCustomerDataRequest,
-  addCustomerRequest,
-  getCurrentPriceRequest,
-  getCustomers,
-} from "../api/clients_api";
+import * as SQLite from "expo-sqlite";
 
 import { createContext } from "react";
 
@@ -20,7 +12,7 @@ export const useCustomer = () => {
   const context = useContext(CustomerContext);
   if (!context) {
     throw new Error(
-      "useCustomer debe usarse dentro de un CustomerContextProvider"
+      "useCustomer debe usarse dentro de un CustomerContextProvider",
     );
   }
 
@@ -28,121 +20,184 @@ export const useCustomer = () => {
 };
 
 export const CustomerContextProvider = ({ children }) => {
+  const db = SQLite.useSQLiteContext();
   const [customers, setCustomers] = useState([]);
 
   const [currentPrice, setCurrentPrice] = useState(0);
 
+  const fetchCustomers = async () => {
+    try {
+      const customers = await db.getAllAsync("SELECT * FROM customers");
+      setCustomers(customers);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const iWantRemoveCustomer = async (value) => {
     try {
-      const res = await removeCustomerRequest(value.customerId);
+      await db.runAsync(
+        "DELETE FROM customers WHERE customerId = ?",
+        value.customerId,
+      );
 
       setCustomers(
-        customers.filter((customer) => customer.customerId !== value.customerId)
+        customers.filter(
+          (customer) => customer.customerId !== value.customerId,
+        ),
       );
+
+      Toast.show({
+        type: "success",
+        text1: "Usuario",
+        text2: "Usuario eliminado con éxito",
+      });
     } catch (error) {
       console.log(error);
     }
   };
 
-  const addCustomer = async (values) => {
-    const fullFormData = new FormData();
-
-    if (values.photo) {
-      Object.entries(values).forEach(([key, value]) => {
-        if (key === "photo") {
-          fullFormData.append(key, {
-            type: mime.getType(value),
-            name: value.split("/").pop(),
-            uri: value,
-          });
-          return;
-        }
-        fullFormData.append(key, value);
-      });
-    }
-
-    const {
-      data: { existCustomer },
-    } = await addCustomerRequest(values.photo ? fullFormData : values);
-
-    if (!existCustomer) {
-      Toast.show({
-        type: "success",
-        text1: "Usuario",
-        text2: "Usuario registrado con éxito",
-      });
-      fetchCustomers();
-
-      return { success: true };
-    }
-
-    Toast.show({
-      type: "info",
-      text1: "Usuario",
-      text2: "Usuario ya registrado",
-    });
-
-    fetchCustomers();
-  };
-
-  const updateCustomerData = async (data, customerId) => {
-    const { status } = await updataCustomerDataRequest(data, customerId);
-    if (status === 200) {
-      Toast.show({
-        type: "success",
-        text1: "Usuario",
-        text2: "Datos actualizado con éxito",
-      });
-      fetchCustomers();
-      return { success: true };
-    }
-  };
-
   const getCurrentPrice = async () => {
     try {
-      const {
-        data: [{ currentPrice }],
-      } = await getCurrentPriceRequest();
+      const { currentPrice } = await db.getFirstAsync(
+        "SELECT currentPrice FROM price",
+      );
       setCurrentPrice(currentPrice);
     } catch (error) {
       console.log(error);
     }
   };
 
+  const addCustomer = async (values) => {
+    const dni = values.dni;
+
+    //
+    // if (values.photo) {
+    //   Object.entries(values).forEach(([key, value]) => {
+    //     if (key === "photo") {
+    //       fullFormData.append(key, {
+    //         type: mime.getType(value),
+    //         name: value.split("/").pop(),
+    //         uri: value,
+    //       });
+    //       return;
+    //     }
+    //     fullFormData.append(key, value);
+    //   });
+    // }
+
+    try {
+      const userExist = await db.getFirstAsync(
+        "SELECT * FROM customers WHERE dni = ?",
+        dni,
+      );
+
+      if (!userExist) {
+        await db.runAsync(
+          `INSERT INTO customers
+            (dni, names, lastnames, startDate, endingDate, amount, duration, planCost, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+
+          values.dni,
+          values.names,
+          values.lastnames,
+          values.startDate,
+          values.endingDate,
+          values.amount,
+          values.duration,
+          values.planCost,
+          values.description,
+        );
+
+        Toast.show({
+          type: "success",
+          text1: "Usuario",
+          text2: "Usuario registrado con éxito",
+        });
+
+        fetchCustomers();
+        return { success: true };
+      } else {
+        Toast.show({
+          type: "info",
+          text1: "Usuario",
+          text2: "Usuario ya registrado",
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    fetchCustomers();
+  };
+
   const getOneCustomer = async (customerId) => {
     try {
-      const { data } = await getOneCustomerRequest(customerId);
-      return data[0];
+      const customer = await db.getFirstAsync(
+        "SELECT * FROM customers WHERE customerId = ?",
+        customerId,
+      );
+
+      return customer;
     } catch (error) {
       console.log(error);
     }
   };
 
-  const fetchCustomers = async () => {
+  const updateCustomerData = async (customer, customerId) => {
     try {
-      const { data } = await getCustomers();
+      await db.runAsync(
+        `UPDATE customers SET
+                dni = ?,
+                names = ?,
+                lastnames = ?,
+                startDate = ?,
+                endingDate = ?,
+                duration = ?,
+                amount = ?,
+                planCost = ?,
+                description = ?
+                WHERE customerId = ?`,
 
-      setCustomers(data.items);
-    } catch (error) {
-      console.error(error);
+        customer.dni,
+        customer.names,
+        customer.lastnames,
+        customer.startDate,
+        customer.endingDate,
+        customer.duration,
+        customer.amount,
+        customer.planCost,
+        customer.description,
+        customerId,
+      );
+      Toast.show({
+        type: "success",
+        text1: "Usuario",
+        text2: "Datos actualizado con éxito",
+      });
+      fetchCustomers();
+
+      return { success: true };
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  useEffect(() => {
-    getCurrentPrice();
-  }, []);
+  // useEffect(() => {
+  //   getCurrentPrice();
+  // }, []);
 
   return (
     <CustomerContext.Provider
       value={{
-        addCustomer,
         fetchCustomers,
         iWantRemoveCustomer,
         getOneCustomer,
-        updateCustomerData,
         customers,
         currentPrice,
         getCurrentPrice,
+        addCustomer,
+        updateCustomerData,
       }}
     >
       {children}
